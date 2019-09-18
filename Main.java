@@ -20,7 +20,7 @@ public class Main {
                     //PrintFile("Help.txt");
                     break;
                 case ("4"):
-                    PrintFile("src\\Library.txt");
+                    Library();
                     break;
                 case ("5"):
                     fl = false;
@@ -46,6 +46,44 @@ public class Main {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+    
+    public static String FindStrInText(int n, String nameFile){
+        try {
+            File file = new File(nameFile);
+            FileReader fr = new FileReader(file);
+            BufferedReader reader = new BufferedReader(fr);
+            String line = reader.readLine();
+            for (int i = 1; i < n; i++)
+                line = reader.readLine();
+            return  line;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return "";
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+    
+    public static void Library(){
+        PrintFile("src\\Library.txt");
+        boolean fl = true;
+        Scanner in = new Scanner(System.in);
+        while (fl){
+            int answer = in.nextInt();
+            switch (answer){
+                case (0):
+                    fl = false;
+                    PrintFile("src\\Start work.txt");
+                    break;
+                default:
+                    System.out.println(htmltext(FindStrInText(answer, "src\\Links.txt").substring(3)));
+
+                    fl = false;
+                    break;
+            }
         }
     }
 }
