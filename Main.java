@@ -1,5 +1,8 @@
 import java.io.*;
 import java.util.Scanner;
+import java.io.IOException;
+import java.net.*;
+import java.util.Date;
 
 public class Main {
     public static void main(String[] args){
@@ -11,19 +14,22 @@ public class Main {
             String answer = in.next();
             switch (answer){
                 case ("1"):
-                    PrintFile("src\\Help.txt");
+                    Help();
                     break;
                 case ("2"):
-                    PrintFile("src\\Авторы.txt");
+                    Authors();;
                     break;
                 case ("3"):
-                    //PrintFile("Help.txt");
+                    PrintDate();;
                     break;
                 case ("4"):
                     Library();
                     break;
                 case ("5"):
                     fl = false;
+                    break;
+                case ("6"):
+                    echo();
                     break;
                 default:
                     System.out.println("Упс, попробуйте ввести цифры без точки");
@@ -85,5 +91,46 @@ public class Main {
                     break;
             }
         }
+    }
+    
+    public static void Help(){
+        PrintFile("src\\Help.txt");
+        exitToMenu("Нажмите 0 для выхода в меню");
+    }
+
+    public static void Authors(){
+        PrintFile("src\\Авторы.txt");
+        exitToMenu("Нажмите 0 для выхода в меню");
+    }
+    
+    public static void PrintDate(){
+        Date date = new Date();
+        System.out.println(date.toString());
+        PrintFile("src\\Start work.txt");
+    }
+    
+    public static void exitToMenu(String str){
+        boolean fl = true;
+        Scanner in = new Scanner(System.in);
+        while (fl){
+            String answer = in.nextLine();
+            switch (answer){
+                case ("0"):
+                    fl = false;
+                    PrintFile("src\\Start work.txt");
+                    break;
+                default:
+                    if (str == "")
+                        System.out.println(answer);
+                    else
+                        System.out.println(str);
+                    break;
+            }
+        }
+    }
+    
+    public static void echo(){
+        PrintFile("src\\echo.txt");
+        exitToMenu("");
     }
 }
