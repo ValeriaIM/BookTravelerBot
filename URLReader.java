@@ -1,41 +1,52 @@
 import java.net.*;
 import java.io.*;
 
+
 public class URLReader {
-    public static  void main(String[] args) throws Exception {
-        String site;
-        if (args.length == 0)
-            site = "https://ru.wikipedia.org/wiki/Java";
-        else
-            site = args[0];
-        String thumbnailSketch = GetThumbnailSketch(site);
-        ProcessText(thumbnailSketch);
+    enum InfoAbout{
+        Author,
+        ThumbnailSketchBook
     }
 
-    public static String GetThumbnailSketch(String site) throws Exception{
+    public static void main(String[] args) throws Exception{
+        //System.out.println(GetInfo("https://ru.wikipedia.org/wiki/Java", InfoAbout.Author));
+        //System.out.println(GetInfo("https://ru.wikipedia.org/wiki/Виноваты_звёзды_(роман)", InfoAbout.ThumbnailSketchBook));
+        //System.out.println(GetThumbnailSketch("https://litlife.club/books/174926/read?page=7", "</div>", "<script src", "</script>", "<a id="));
+    }
+
+    public static String GetThumbnailSketch(String site, String preBegin, String begin, String preEnd, String end) throws Exception{
         URL website = new URL(site);
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(website.openStream()));
-
         String inputLine;
         StringBuilder text = new StringBuilder("");
         Boolean fl = false;
+        Boolean flEnd = false;
+        Boolean flBegin = false;
         while ((inputLine = in.readLine()) != null) {
-            if (inputLine.contains("<div")) {
-                fl = false;
+            if ((flEnd) && (inputLine.contains(end)))
+                break;
+            else
+                flEnd = false;
+            if ((inputLine.contains(preEnd)) && fl) {
+                flEnd = true;
             }
             if (fl) {
                 text.append(inputLine);
             }
-            if (inputLine.contains("<p><b>")) {
+            if (flBegin && inputLine.contains(begin)){
                 text.append(inputLine);
                 fl = true;
+                flBegin = false;
+                continue;
             }
+            else
+                flBegin = false;
+            if (inputLine.contains(preBegin))
+                flBegin = true;
         }
-        System.out.println(text);
-        System.out.println("");
         in.close();
-        return String.valueOf(text);
+        return text.toString();
     } // необработанный абзац с javascript конструкцией
 
     public static String ProcessText(String text){
@@ -44,17 +55,27 @@ public class URLReader {
         StringBuilder newText = new StringBuilder("");
         Boolean flSkip = false;
         Boolean flJ = false; //флаг на символ &(случай &#91; = '[')
-        int flB = 0; //флаг на [], когда включен фл flJ
-        //Boolean flE = true;
-
+        int flDiv = 0;
+        var textArray = text.toCharArray();
         for (int i = 0; i < text.length(); i++) {
-            var textArray = text.toCharArray();
+            if ((textArray[i] == ' ') && (textArray[i + 1] == '<') && (textArray[i + 2] == '/'))
+                continue;
             if (textArray[i] == '>') {
-                flSkip = true;
+                flSkip = false;
                 continue;
             }
             if (textArray[i] == '<') {
-                flSkip = false;
+                if ((textArray[i + 1] == '/') && (textArray[i + 2] == 'p'))
+                    newText.append('\n');
+                flSkip = true;
+                continue;
+            }
+            if ((textArray[i] == 'd') && (textArray[i + 1] == 'i') && (textArray[i + 2] == 'v')) {
+                if (textArray[i - 1] == '/')
+                    flDiv--;
+                else
+                    flDiv++;
+                i += 3;
                 continue;
             }
             if ((textArray[i] == '&') && (textArray[i + 1] == '#')) {
@@ -73,17 +94,29 @@ public class URLReader {
                     continue;
                 }
                 if (textArray[i + 5] == ';') {
+                    newText.append(' ');
                     i += 5;
                     continue;
                 }
                 continue;
             }
-            if (flJ)
+            if ((flJ) || (flDiv > 0))
                 continue;
-            if (flSkip)
+            if (!(flSkip))
                 newText.append(textArray[i]);
         }
-        System.out.println(newText);
-        return String.valueOf(newText);
+        return newText.toString();
+    }
+
+    public static String GetInfo(String site, InfoAbout info)throws Exception{
+        if (site == null)
+            site = "https://ru.wikipedia.org/wiki/Java";
+        if (info == InfoAbout.ThumbnailSketchBook) {
+            return ProcessText(GetThumbnailSketch(site, "</h2", "<p", "</p", "<h2"));
+        }
+        if (info == InfoAbout.Author) {
+            return ProcessText(GetThumbnailSketch(site, "<div", "<p><b>", "</p", "<div"));
+        }
+        return ""; // читать книгу
     }
 }
