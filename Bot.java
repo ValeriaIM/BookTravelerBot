@@ -11,13 +11,18 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import java.io.*;
-import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
+interface MyFunc{
+    void func(Message message);
+}
 
 public class Bot extends TelegramLongPollingBot {
+    public Boolean flecho = false;
+
+    public BotState botState = new BotState();
+
     public static void main(String[] args){
         ApiContextInitializer.init();
         TelegramBotsApi telegramBotApi = new TelegramBotsApi();
@@ -30,25 +35,27 @@ public class Bot extends TelegramLongPollingBot {
 
     public void onUpdateReceived(Update update) { //прием сообщений, получение обновлений, реализованный на лонгпул - запрос
         Message message = update.getMessage();
+
+        botState.SetCurrentCommands(botState.createPrimitiveCommands(this, botState));
         if (message != null && message.hasText()){
-            switch (message.getText()){
-                case ("/help"):
-                    help(message);
-                    break;
-                case ("/echo"):
-                    echo(message); // здесь надо доработать
-                    break;
-                case ("/authors"):
-                    authors(message);
-                    break;
-                case ("/printDate"):
-                    printDate(message);
-                    break;
-                case ("/library"):
-                    library(message);
-                    break;
-            }
+            processingMessage(message);
         }
+    }
+
+    public void processingMessage(Message message){
+        var commands = botState.GetCurrentCommands();
+        if (flecho){
+            BotState.echo(this, message);
+            flecho = false;
+        }
+        else
+            if (commands.containsKey(message.getText())){
+                MyFunc func = commands.get(message.getText());
+                func.func(message);
+            }
+            else
+                sendMsg(message, "Неверная команда, попробуй еще раз.");
+            //BotState.processState(this, botState, message);
     }
 
     public void sendMsg(Message message, String text) {
@@ -57,7 +64,7 @@ public class Bot extends TelegramLongPollingBot {
         sendMessage.setChatId(message.getChatId().toString());
         sendMessage.setText(text);
         try {
-            setButtom(sendMessage);
+            addButtons(sendMessage);
             execute(sendMessage);
         } catch (TelegramApiException e) {
             e.printStackTrace();
@@ -72,30 +79,31 @@ public class Bot extends TelegramLongPollingBot {
         return "741739778:AAFfKTQkbLQkePnWPJaRhe11uAJFnUYcfaM";
     }
 
-    public void setButtom(SendMessage sendMessage) {
+    public void addButtons(SendMessage sendMessage) {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();//инициализация клавиатуры
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
         replyKeyboardMarkup.setSelective(true);
         replyKeyboardMarkup.setResizeKeyboard(true);
         replyKeyboardMarkup.setOneTimeKeyboard(false);//не скрывать клаву
 
-        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        List<KeyboardRow> keyboardRowList = new ArrayList<KeyboardRow>();
         KeyboardRow keyboardFirstRow = new KeyboardRow();
 
-        keyboardFirstRow.add(new KeyboardButton("/help"));
-        keyboardFirstRow.add(new KeyboardButton("/echo"));
-        keyboardFirstRow.add(new KeyboardButton("/authors"));
-        keyboardFirstRow.add(new KeyboardButton("/printDate"));
-        keyboardFirstRow.add(new KeyboardButton("/library"));
+        //keyboardFirstRow.clear();
+        
+        var currentCommands = botState.GetCurrentCommands();
+        for (String command : currentCommands.keySet()) {
+            keyboardFirstRow.add(new KeyboardButton(command));
+        }
 
         keyboardRowList.add(keyboardFirstRow);
         replyKeyboardMarkup.setKeyboard(keyboardRowList);
     }
 
-    public void printSmallFile(String nameFile, Message message) {
+    public void printFile(String nameFile, Message message) {
         try{
             File file = new java.io.File(nameFile);
-            FileReader fileReader = new FileReader(file);
+            FileReader fileReader = new FileReader(file, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(fileReader);
             String line = reader.readLine();
             StringBuffer text = new StringBuffer();
@@ -108,28 +116,6 @@ public class Bot extends TelegramLongPollingBot {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    } // выводит все целиком, для больших файлов другой сделаем. он юудет по частям.
-
-    public void help(Message message){
-        printSmallFile("src\\main\\resources\\help.txt", message);
-    } // сделать функции перехода. не сейчас
-
-    public void authors(Message message) {
-        printSmallFile("src\\main\\resources\\authors.txt", message);
-    }
-
-    public void echo(Message message) {
-        sendMsg(message, message.getText());
-    }
-
-    public void printDate(Message message){
-        Date date = new Date();
-        Locale local = new Locale("ru","RU");
-        DateFormat df = DateFormat.getDateTimeInstance (DateFormat.LONG, DateFormat.LONG, local);
-        sendMsg(message, df.format(date));
-    }
-
-    public void library(Message message){
-        printSmallFile("src\\main\\resources\\library.txt", message);
     }
 }
+
