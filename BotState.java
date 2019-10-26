@@ -90,7 +90,7 @@ public class BotState {
     public static void exitToMain(Bot bot, BotState botState, Message message){
         botState.SetState(State.Main);
         processState(bot, botState);
-        bot.printFile("src\\main\\resources\\inMain.txt", message);
+        bot.sendMsg(message, "Вы вышли в главное меню.");
     }
 
     public static void processState(Bot bot, BotState botState){
