@@ -21,13 +21,15 @@ interface MyFunc{
 public class Bot extends TelegramLongPollingBot {
     public Boolean flecho = false;
 
-    public BotState botState = new BotState();
+    public static BotState botState = new BotState();
 
     public static void main(String[] args){
         ApiContextInitializer.init();
         TelegramBotsApi telegramBotApi = new TelegramBotsApi();
         try {
-            telegramBotApi.registerBot(new Bot());
+            Bot bot = new Bot();
+            telegramBotApi.registerBot(bot);
+            botState.SetCurrentCommands(BotState.createPrimitiveCommands(bot, botState));
         } catch (TelegramApiRequestException e) {
             e.printStackTrace();
         }
@@ -36,7 +38,6 @@ public class Bot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) { //прием сообщений, получение обновлений, реализованный на лонгпул - запрос
         Message message = update.getMessage();
 
-        botState.SetCurrentCommands(botState.createPrimitiveCommands(this, botState));
         if (message != null && message.hasText()){
             processingMessage(message);
         }
@@ -55,7 +56,6 @@ public class Bot extends TelegramLongPollingBot {
             }
             else
                 sendMsg(message, "Неверная команда, попробуй еще раз.");
-            //BotState.processState(this, botState, message);
     }
 
     public void sendMsg(Message message, String text) {
@@ -88,8 +88,6 @@ public class Bot extends TelegramLongPollingBot {
 
         List<KeyboardRow> keyboardRowList = new ArrayList<KeyboardRow>();
         KeyboardRow keyboardFirstRow = new KeyboardRow();
-
-        //keyboardFirstRow.clear();
         
         var currentCommands = botState.GetCurrentCommands();
         for (String command : currentCommands.keySet()) {
@@ -118,4 +116,3 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 }
-
