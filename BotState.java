@@ -22,6 +22,8 @@ public class BotState {
     private State state = State.Main;
     private HashMap<String, MyFunc> currentCommands;
 
+    private int currentBook = 0;
+
     public State getState(){
         return state;
     }
@@ -61,6 +63,7 @@ public class BotState {
         HashMap<String, MyFunc> commands = new HashMap<>();
         commands.put("/help", (message -> help(bot, message)));
         commands.put("/exitToMain", (message -> exitToMain(bot, botState, message)));
+        commands.put("chooseBook", (message -> chooseBook(bot, botState, message)));
         return commands;
     }
 
@@ -71,14 +74,14 @@ public class BotState {
         commands.put("/library", (message -> library(bot, botState, message)));
         commands.put("/infoAboutAuthor", (message -> {
             try {
-                getInfoAbAuthor(bot, message);
+                getInfoAbAuthor(bot, botState, message);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }));
-        commands.put("getThumbnailSketch", (message -> {
+        commands.put("/getThumbnailSketch", (message -> {
             try {
-                getThumbnailSketch(bot, message);
+                getThumbnailSketch(bot, botState, message);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -138,28 +141,45 @@ public class BotState {
         }
     }
 
-    public static void getInfoAbAuthor(Bot bot, Message message) throws Exception {
-        String site = readFile("src\\main\\resources\\library-authors-wiki-link.txt", Integer.parseInt(message.getText()));
-        String info = URLReader.GetInfo(site, URLReader.InfoAbout.Author);
+    public static void getInfoAbAuthor(Bot bot, BotState botState, Message message) throws Exception {
+        String site = readFile("src\\main\\resources\\library-authors-wiki-link.txt", botState.currentBook);
+        String info = URLReader.GetInfo(site.substring(2), URLReader.InfoAbout.Author);
+        System.out.print(info);
         bot.sendMsg(message, info);
     }
 
-    public static void getThumbnailSketch(Bot bot, Message message) throws Exception {
-        String site = readFile("src\\main\\resources\\library-wiki-link.txt", Integer.parseInt(message.getText()));
-        String info = URLReader.GetInfo(site, URLReader.InfoAbout.ThumbnailSketchBook);
-        bot.sendMsg(message, info);
+    public static void getThumbnailSketch(Bot bot, BotState botState, Message message) throws Exception {
+        String site = readFile("src\\main\\resources\\library-wiki-link.txt", botState.currentBook);
+        String info = URLReader.GetInfo(site.substring(2), URLReader.InfoAbout.ThumbnailSketchBook);
+        System.out.print(info);
+        StringBuffer text = new StringBuffer();
+        var arInfo = info.toCharArray();
+        for (int i = 0; i < arInfo.length; i++){
+            if (arInfo[i] == '\n'){
+                bot.sendMsg(message, text.toString());
+                text = new StringBuffer(); //затормозить выход
+            }
+            else
+                text.append(arInfo[i]);
+        }
+
     }
 
     public static void readNext(Bot bot, Message message){
 
     } //здесь доделать
 
-    public static void chooseBook(Bot bot, Message message){
-        if (bot.flChoose)
-            //bot.sendMsg(message, message.getText());
+    public static void chooseBook(Bot bot, BotState botState, Message message){
+        if (bot.flChoose){
+            botState.setState(State.Read);
+            processState(bot, botState);
+            bot.sendMsg(message, "Приятного чтения"); // позже удалить
+            botState.currentBook = Integer.parseInt(message.getText());
+            //вывести первый абзац
+        }
         bot.flChoose = true;
-    } //здесь доделать
-    
+    }
+
     private static String readFile(String nameFile, int n){
         try {
             File file = new java.io.File(nameFile);
