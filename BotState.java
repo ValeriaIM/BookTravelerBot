@@ -33,6 +33,13 @@ public class BotState {
         currentCommands = newCurrentCommands;
     }
 
+    public BotState BotState(State newState, HashMap<String, MyFunc> newCurrentCommands){
+        var newBotState = new BotState();
+        newBotState.SetState(newState);
+        newBotState.SetCurrentCommands(newCurrentCommands);
+        return newBotState;
+    }
+
     public static HashMap<String, MyFunc> createPrimitiveCommands(Bot bot, BotState botState) {
         HashMap<String, MyFunc> commands = new HashMap<>();
         commands.put("/help", (message -> help(bot, message)));
@@ -40,7 +47,6 @@ public class BotState {
         commands.put("/authors", (message -> authors(bot, message)));
         commands.put("/printDate", (message -> printDate(bot, message)));
         commands.put("/library", (message -> library(bot, botState, message)));
-        commands.put("/start", (message -> startBot(bot, message)));
         return commands;
     }
 
@@ -77,22 +83,17 @@ public class BotState {
     public static void library(Bot bot, BotState botState, Message message){
         botState.SetState(State.Library);
         bot.sendMsg(message, "Вы в библиотеке.");
-        processState(bot, botState, message);
+        processState(bot, botState);
         bot.printFile("src\\main\\resources\\library.txt", message);
-
-    }
-
-    public static void startBot(Bot bot, Message message){
-        bot.printFile("src\\main\\resources\\startBot.txt", message);
     }
 
     public static void exitToMain(Bot bot, BotState botState, Message message){
         botState.SetState(State.Main);
+        processState(bot, botState);
         bot.printFile("src\\main\\resources\\inMain.txt", message);
-        bot.sendMsg(message, "Вы вышли в главное меню.");
     }
 
-    public static void processState(Bot bot, BotState botState, Message message){
+    public static void processState(Bot bot, BotState botState){
         switch (botState.GetState()){
             case Main:
                 botState.SetCurrentCommands(createPrimitiveCommands(bot, botState));
@@ -104,7 +105,6 @@ public class BotState {
                 botState.SetCurrentCommands(createReadCommands(bot, botState));
                 break;
         }
-        bot.sendMsg(message, "");
     }
 
     private static HashMap<String,MyFunc> createReadCommands(Bot bot, BotState botState) {
