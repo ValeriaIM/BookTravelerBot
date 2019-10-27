@@ -19,7 +19,8 @@ interface MyFunc{
 }
 
 public class Bot extends TelegramLongPollingBot {
-    public Boolean flecho = false;
+    public Boolean flEcho = false;
+    public Boolean flChoose = false;
 
     public static BotState botState = new BotState();
 
@@ -29,7 +30,7 @@ public class Bot extends TelegramLongPollingBot {
         try {
             Bot bot = new Bot();
             telegramBotApi.registerBot(bot);
-            botState.SetCurrentCommands(BotState.createPrimitiveCommands(bot, botState));
+            botState.setCurrentCommands(BotState.createPrimitiveCommands(bot, botState));
         } catch (TelegramApiRequestException e) {
             e.printStackTrace();
         }
@@ -44,10 +45,16 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     public void processingMessage(Message message){
-        var commands = botState.GetCurrentCommands();
-        if (flecho){
-            BotState.echo(this, message);
-            flecho = false;
+        var commands = botState.getCurrentCommands();
+        if ((flEcho) || (flChoose)){
+            if (flEcho) {
+                BotState.echo(this, message);
+                flEcho = false;
+            }
+            else {
+                BotState.chooseBook(this, botState, message);
+                flChoose = false;
+            }
         }
         else
             if (commands.containsKey(message.getText())){
@@ -89,7 +96,7 @@ public class Bot extends TelegramLongPollingBot {
         List<KeyboardRow> keyboardRowList = new ArrayList<KeyboardRow>();
         KeyboardRow keyboardFirstRow = new KeyboardRow();
         
-        var currentCommands = botState.GetCurrentCommands();
+        var currentCommands = botState.getCurrentCommands();
         for (String command : currentCommands.keySet()) {
             keyboardFirstRow.add(new KeyboardButton(command));
         }
