@@ -86,16 +86,16 @@ public class BotState {
                 e.printStackTrace();
             }
         }));
-        commands.put("бђ…", (message -> readNext(bot, message)));
-        //РїРѕРґСѓРјР°С‚СЊ РЅР°Рґ С‚РµРј, РєР°Рє РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р±СѓРґРµС‚ РїРѕР»СѓС‡Р°С‚СЊ РІС‹Р±СЂР°РЅРЅС‹Р№ Р°Р±Р·Р°С†
+        commands.put("ᐅ", (message -> readNext(bot, message)));
+        //подумать над тем, как пользователь будет получать выбранный абзац
         return commands;
     }
 
-    //Р’СЃРµРІРѕР·РјРѕР¶РЅС‹Рµ РєРѕРјР°РЅРґС‹ РґР»СЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+    //Всевозможные команды для пользователя
 
     public static void help(Bot bot, Message message){
         bot.printFile("src\\main\\resources\\help.txt", message);
-    } // СЃРґРµР»Р°С‚СЊ С„СѓРЅРєС†РёРё РїРµСЂРµС…РѕРґР°. РЅРµ СЃРµР№С‡Р°СЃ
+    } // сделать функции перехода. не сейчас
 
     public static void authors(Bot bot, Message message) {
         bot.printFile("src\\main\\resources\\authors.txt", message);
@@ -116,7 +116,7 @@ public class BotState {
 
     public static void library(Bot bot, BotState botState, Message message){
         botState.setState(State.Library);
-        bot.sendMsg(message, "Р’С‹ РІ Р±РёР±Р»РёРѕС‚РµРєРµ.");
+        bot.sendMsg(message, "Вы в библиотеке.");
         processState(bot, botState);
         bot.printFile("src\\main\\resources\\library.txt", message);
     }
@@ -124,7 +124,7 @@ public class BotState {
     public static void exitToMain(Bot bot, BotState botState, Message message){
         botState.setState(State.Main);
         processState(bot, botState);
-        bot.sendMsg(message, "Р’С‹ РІС‹С€Р»Рё РІ РіР»Р°РІРЅРѕРµ РјРµРЅСЋ.");
+        bot.sendMsg(message, "Вы вышли в главное меню.");
     }
 
     public static void processState(Bot bot, BotState botState){
@@ -157,7 +157,7 @@ public class BotState {
         for (int i = 0; i < arInfo.length; i++){
             if (arInfo[i] == '\n'){
                 bot.sendMsg(message, text.toString());
-                text = new StringBuffer(); //Р·Р°С‚РѕСЂРјРѕР·РёС‚СЊ РІС‹С…РѕРґ
+                text = new StringBuffer(); //затормозить выход
             }
             else
                 text.append(arInfo[i]);
@@ -167,15 +167,15 @@ public class BotState {
 
     public static void readNext(Bot bot, Message message){
 
-    } //Р·РґРµСЃСЊ РґРѕРґРµР»Р°С‚СЊ
+    } //здесь доделать
 
     public static void chooseBook(Bot bot, BotState botState, Message message){
         if (bot.flChoose){
             botState.setState(State.Read);
             processState(bot, botState);
-            bot.sendMsg(message, "РџСЂРёСЏС‚РЅРѕРіРѕ С‡С‚РµРЅРёСЏ"); // РїРѕР·Р¶Рµ СѓРґР°Р»РёС‚СЊ
+            bot.sendMsg(message, "Приятного чтения"); // позже удалить
             botState.currentBook = Integer.parseInt(message.getText());
-            //РІС‹РІРµСЃС‚Рё РїРµСЂРІС‹Р№ Р°Р±Р·Р°С†
+            //вывести первый абзац
         }
         bot.flChoose = true;
     }
