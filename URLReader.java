@@ -5,12 +5,13 @@ import java.io.*;
 public class URLReader {
     enum InfoAbout{
         Author,
-        ThumbnailSketchBook
+        ThumbnailSketchBook,
+        Books
     }
 
     public static void main(String[] args) throws Exception{
         //System.out.println(GetInfo("https://ru.wikipedia.org/wiki/Java", InfoAbout.Author));
-        //System.out.println(GetInfo("https://ru.wikipedia.org/wiki/Виноваты_звёзды_(роман)", InfoAbout.ThumbnailSketchBook));
+        //System.out.println(GacetInfo("https://ru.wikipedia.org/wiki/Виноваты_звёзды_(роман)", InfoAbout.ThumbnailSketchBook));
         //System.out.println(GetThumbnailSketch("https://litlife.club/books/174926/read?page=7", "</div>", "<script src", "</script>", "<a id="));
     }
 
