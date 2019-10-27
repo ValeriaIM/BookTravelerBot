@@ -115,7 +115,7 @@ public class URLReader {
             return ProcessText(GetThumbnailSketch(site, "</h2", "<p", "</p", "<h2"));
         }
         if (info == InfoAbout.Author) {
-            return ProcessText(GetThumbnailSketch(site, "<div", "<p><b>", "</p", "<div"));
+            return ProcessText(GetThumbnailSketch(site, "</tabl", "<p>", "</p", "<div"));
         }
         return ""; // читать книгу
     }
