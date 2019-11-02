@@ -15,38 +15,52 @@ import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
-import java.awt.image.AreaAveragingScaleFilter;
 import java.io.*;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.model.File;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public class GoogleDrive {
 
+    private Drive Service;
+    private HashMap<String, String> Files = new HashMap<String, String>(); // ключ - имя файла, значение - его ID
+
     private static final String APPLICATION_NAME = "Google Drive API Java Quickstart";
-
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-
-    // Directory to store user credentials for this application.
     private static final java.io.File CREDENTIALS_FOLDER //
             = new java.io.File(System.getProperty("user.home"), "credentials");
 
     private static final String CLIENT_SECRET_FILE_NAME = "client_secret.json";
-
-    //
-    // Global instance of the scopes required by this quickstart. If modifying these
-    // scopes, delete your previously saved credentials/ folder.
-    //
     private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE);
+
+    public Drive getDrive() {
+        return Service;
+    }
+
+    public GoogleDrive() throws IOException, GeneralSecurityException {
+        if (!CREDENTIALS_FOLDER.exists()) {
+            CREDENTIALS_FOLDER.mkdirs();
+            System.out.println("Created Folder: " + CREDENTIALS_FOLDER.getAbsolutePath());
+            System.out.println("Copy file " + CLIENT_SECRET_FILE_NAME + " into folder above.. and rerun this class!!");
+            return;
+        }
+        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+
+        Credential credential = getCredentials(HTTP_TRANSPORT);
+
+        Service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential) //
+                .setApplicationName(APPLICATION_NAME).build();
+
+        FileList files = Service.files().list().setFields("nextPageToken, files(id, name)").execute();
+        for(File file : files.getFiles()) {
+            Files.put(file.getName(), file.getId());
+        }
+    }
 
     private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
 
@@ -56,7 +70,6 @@ public class GoogleDrive {
             throw new FileNotFoundException("Please copy " + CLIENT_SECRET_FILE_NAME //
                     + " to folder: " + CREDENTIALS_FOLDER.getAbsolutePath());
         }
-
         // Load client secrets.
         InputStream in = new FileInputStream(clientSecretFilePath);
 
@@ -70,8 +83,8 @@ public class GoogleDrive {
         return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
     }
 
-    public static void printFiles(Drive service) throws IOException {
-        FileList result = service.files().list().setPageSize(10).setFields("nextPageToken, files(id, name)").execute();
+    public void printFiles(Drive service) throws IOException {
+        FileList result = Service.files().list().setPageSize(10).setFields("nextPageToken, files(id, name)").execute();
         List<File> files = result.getFiles();
         if (files == null || files.isEmpty()) {
             System.out.println("No files found.");
@@ -82,75 +95,37 @@ public class GoogleDrive {
             }
         }
     }
-    public static ArrayList<String> getParagraphsList(String text)
-    {
-        ArrayList<String> result = new ArrayList<>();
-        var currrentNumber = 1;
-        StringBuffer currentLine = new StringBuffer();
+    public String getFileId(String name) {
+        if(!Files.isEmpty() & Files.containsKey(name))
+            return Files.get(name);
+        return null; // как обработать ошибку несуществующего ключа?
+    }
 
-        for (var i = 0; i < text.length(); i++)
-        {
-            if(text.charAt(i) == '\n')
-            {
-                if (currentLine != null)
-                {
-                    currentLine.insert(0, "(" + currrentNumber + ") ");
-                    currrentNumber++;
-                    result.add(currentLine.toString());
-                    currentLine = new StringBuffer();
-                }
+    public String getTextByGoogleDisk(Drive service , String fileName) throws IOException {
+        OutputStream outputStream = new ByteArrayOutputStream();
+        var fileId = getFileId(fileName); //
+        service.files().export(fileId, "text/plain")
+                .executeMediaAndDownloadTo(outputStream);   
+        return outputStream.toString();
+    }
+
+    public ArrayList<String> getParagraphsList(String text) {
+        String[] strArray = text.split("\\n");
+        ArrayList<String> result = new ArrayList<>();
+        var currentNumber = 0;
+
+        for(var i  = 0; i < strArray.length; i++) {
+            if(strArray[i].length() > 1) {
+                StringBuffer line = new StringBuffer(strArray[i]);
+                line.insert(0, "(" + currentNumber + ") ");
+                currentNumber++;
+                result.add(line.toString());
             }
-            else
-            {
-                currentLine.append(text.charAt(i));
-            }
-        }
-        if (currentLine != null)
-        {
-            currentLine.insert(0, "(" + currrentNumber + ") ");
-            result.add(currentLine.toString());
         }
         return  result;
     }
 
-    public static String getTextByGoogleDisk(Drive service , String fileId) throws IOException {
-        OutputStream outputStream = new ByteArrayOutputStream();
-        service.files().export(fileId, "text/plain")
-                .executeMediaAndDownloadTo(outputStream);
-        //System.out.println(outputStream.toString());
-        return outputStream.toString();
-    }
-
     public static void main(String... args) throws IOException, GeneralSecurityException {
-
         System.out.println("CREDENTIALS_FOLDER: " + CREDENTIALS_FOLDER.getAbsolutePath());
-
-        // 1: Create CREDENTIALS_FOLDER
-        if (!CREDENTIALS_FOLDER.exists()) {
-            CREDENTIALS_FOLDER.mkdirs();
-
-            System.out.println("Created Folder: " + CREDENTIALS_FOLDER.getAbsolutePath());
-            System.out.println("Copy file " + CLIENT_SECRET_FILE_NAME + " into folder above.. and rerun this class!!");
-            return;
-        }
-
-        // 2: Build a new authorized API client service.
-        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-
-        // 3: Read client_secret.json file & create Credential object.
-        Credential credential = getCredentials(HTTP_TRANSPORT);
-
-        // 5: Create Google Drive Service.
-        Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential) //
-                .setApplicationName(APPLICATION_NAME).build();
-        printFiles(service);
-        //getTextByGoogleDisk(service, "1AZEXSBvmyMDwqyugIvD_oqMMpe0aH3BPsLjkxqutpQg");
-
-       String ro = getTextByGoogleDisk(service, "1AZEXSBvmyMDwqyugIvD_oqMMpe0aH3BPsLjkxqutpQg");
-        var result = getParagraphsList(ro);
-        for (var i = 0; i< result.size(); i++)
-        {
-            System.out.println(result.get(i));
-        }
     }
 }
