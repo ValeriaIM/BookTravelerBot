@@ -96,16 +96,20 @@ public class GoogleDrive {
         }
     }
     public String getFileId(String name) {
-        if(!Files.isEmpty() & Files.containsKey(name))
+        if(!Files.containsKey(name)) {
+            System.out.println("извините, текст данной книги добавится позже");
+        }
+        if(!Files.isEmpty())
             return Files.get(name);
         return null; // как обработать ошибку несуществующего ключа?
+        // протащить в BotState ошибку, а он выведет пользователю "извините, текст данной книги добавится позже"
     }
 
     public String getTextByGoogleDisk(Drive service , String fileName) throws IOException {
         OutputStream outputStream = new ByteArrayOutputStream();
         var fileId = getFileId(fileName); //
         service.files().export(fileId, "text/plain")
-                .executeMediaAndDownloadTo(outputStream);   
+                .executeMediaAndDownloadTo(outputStream);
         return outputStream.toString();
     }
 
