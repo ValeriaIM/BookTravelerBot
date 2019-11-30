@@ -1,3 +1,4 @@
+import org.o7planning.googledrive.quickstart.GoogleDrive;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -12,17 +13,40 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.text.DateFormat;
 import java.util.*;
 
 interface MyFunc{
     void func(Message message);
 }
-
 public class Bot extends TelegramLongPollingBot {
-    public Boolean flEcho = false;
     public Boolean flChoose = false;
+    public Boolean flEcho = false;
 
-    public static BotState botState = new BotState();
+    enum State{
+        Main,
+        Library,
+        Read
+    }
+
+    private State botState = State.Main;
+    public HashMap<String, MyFunc> currentCommands = createPrimitiveCommands();
+    private GoogleDrive googleDrive;
+    {
+        try {
+            googleDrive = new GoogleDrive();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private int countBookInLibrary = 2;
+    private int currentBook = 0;
+    private ArrayList<String> currentParagraphsList = new ArrayList<>();
+    private int currentPosition = 0;
 
     public static void main(String[] args){
         ApiContextInitializer.init();
@@ -30,7 +54,6 @@ public class Bot extends TelegramLongPollingBot {
         try {
             Bot bot = new Bot();
             telegramBotApi.registerBot(bot);
-            botState.setCurrentCommands(BotState.createPrimitiveCommands(bot, botState));
         } catch (TelegramApiRequestException e) {
             e.printStackTrace();
         }
@@ -40,29 +63,29 @@ public class Bot extends TelegramLongPollingBot {
         Message message = update.getMessage();
 
         if (message != null && message.hasText()){
-            processingMessage(message);
+            try {
+                processingMessage(message);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    public void processingMessage(Message message){
-        var commands = botState.getCurrentCommands();
-        if ((flEcho) || (flChoose)){
-            if (flEcho) {
-                BotState.echo(this, message);
-                flEcho = false;
-            }
-            else {
-                BotState.chooseBook(this, botState, message);
-                flChoose = false;
-            }
+    public void processingMessage(Message message) throws IOException {
+        if (flEcho) {
+            echo(message);
+            flEcho = false;
+        }
+        else if (flChoose) {
+            chooseBook(message);
+            flChoose = false;
+        }
+        else if (currentCommands.containsKey(message.getText())){
+            MyFunc func = currentCommands.get(message.getText());
+            func.func(message);
         }
         else
-            if (commands.containsKey(message.getText())){
-                MyFunc func = commands.get(message.getText());
-                func.func(message);
-            }
-            else
-                sendMsg(message, "Неверная команда, попробуй еще раз.");
+            sendMsg(message, "Неверная команда, попробуй еще раз.");
     }
 
     public void sendMsg(Message message, String text) {
@@ -95,8 +118,24 @@ public class Bot extends TelegramLongPollingBot {
 
         List<KeyboardRow> keyboardRowList = new ArrayList<KeyboardRow>();
         KeyboardRow keyboardFirstRow = new KeyboardRow();
-        
-        var currentCommands = botState.getCurrentCommands();
+
+        for (String command : currentCommands.keySet()) {
+            keyboardFirstRow.add(new KeyboardButton(command));
+        }
+
+        keyboardRowList.add(keyboardFirstRow);
+        replyKeyboardMarkup.setKeyboard(keyboardRowList);
+    }
+
+    public void updateButtons(SendMessage sendMessage) {
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();//инициализация клавиатуры
+        replyKeyboardMarkup.setSelective(true);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        replyKeyboardMarkup.setOneTimeKeyboard(false);//не скрывать клаву
+
+        List<KeyboardRow> keyboardRowList = new ArrayList<KeyboardRow>();
+        KeyboardRow keyboardFirstRow = new KeyboardRow();
+
         for (String command : currentCommands.keySet()) {
             keyboardFirstRow.add(new KeyboardButton(command));
         }
@@ -118,6 +157,181 @@ public class Bot extends TelegramLongPollingBot {
                 line = reader.readLine();
             }
             sendMsg(message, text.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public HashMap<String, MyFunc> createPrimitiveCommands() {
+        HashMap<String, MyFunc> commands = new HashMap<>();
+        commands.put("/help", (message -> help(message)));
+        commands.put("/echo", (message -> echo(message)));
+        commands.put("/authors", (message -> authors(message)));
+        commands.put("/printDate", (message -> printDate(message)));
+        commands.put("/library", (message -> library(message)));
+        return commands;
+    }
+
+    public HashMap<String, MyFunc> createLibraryCommands() {
+        HashMap<String, MyFunc> commands = new HashMap<>();
+        commands.put("/help", (message -> help(message)));
+        commands.put("/exitToMain", (message -> exitToMain(message)));
+        commands.put("chooseBook", (message -> {
+            sendMsg(message, "Введите номер книги");
+            chooseBook(message);}));
+        return commands;
+    }
+
+    private HashMap<String,MyFunc> createReadCommands() {
+        HashMap<String, MyFunc> commands = new HashMap<>();
+        commands.put("/help", (message -> help(message)));
+        // commands.put("/exitToMain", (message -> exitToMain(bot, botState, message)));
+        commands.put("/library", (message -> library(message)));
+        commands.put("/infoAboutAuthor", (message -> {
+            try {
+                getInfoAbAuthor(message);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }));
+        commands.put("/getThumbnailSketch", (message -> {
+            try {
+                getThumbnailSketch(message);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }));
+        commands.put("ᐅ", (message -> {
+
+            readNext(message);
+
+        }));
+        //подумать над тем, как пользователь будет получать выбранный абзац
+        return commands;
+    }
+
+    public void help(Message message){
+        if(botState == State.Main)
+            printFile("src\\main\\resources\\helpMain.txt", message);
+        else if(botState == State.Library)
+            printFile("src\\main\\resources\\helpLibrary.txt", message);
+        else if (botState == State.Read)
+            printFile("src\\main\\resources\\helpRead.txt", message);
+
+
+    } // сделать функции перехода. не сейчас
+
+    public void authors(Message message) {
+        printFile("src\\main\\resources\\authors.txt", message);
+    }
+
+    public void echo(Message message) {
+        if (flEcho)
+            sendMsg(message, message.getText());
+        flEcho = true;
+    }
+
+    public void printDate(Message message){
+        Date date = new Date();
+        Locale local = new Locale("ru","RU");
+        DateFormat df = DateFormat.getDateTimeInstance (DateFormat.LONG, DateFormat.LONG, local);
+        sendMsg(message, df.format(date));
+    }
+
+    public void library(Message message){
+        botState = State.Library;
+        currentCommands = createLibraryCommands();
+        sendMsg(message, "Вы в библиотеке.");
+        printFile("src\\main\\resources\\library.txt", message);
+    }
+
+    public void exitToMain(Message message){
+        botState = State.Main;
+        currentCommands = createPrimitiveCommands();
+        sendMsg(message, "Вы вышли в главное меню.");
+    }
+
+    public void chooseBook(Message message){
+        if (flChoose){
+            botState = State.Read;
+            currentCommands = createReadCommands();
+            var number = Integer.parseInt(message.getText());
+            if(number < 0 || countBookInLibrary < number){
+                sendMsg(message, "Неправильно выбран номер книги");
+                botState = State.Library;
+                currentCommands = createLibraryCommands();
+            } else {
+                sendMsg(message, "Приятного чтения");
+                currentBook = Integer.parseInt(message.getText());
+                setCurrentParagraphsList();
+                sendMsg(message, currentParagraphsList.get(currentPosition)); //выводит первый абзац
+                currentPosition++;
+            }
+        }
+        flChoose = true;
+    }
+
+    public void getInfoAbAuthor(Message message) throws Exception {
+        String site = readFileLine("src\\main\\resources\\library-authors-wiki-link.txt", currentBook);
+        String info = URLReader.GetInfo(site.substring(2), URLReader.InfoAbout.Author);
+        sendMsg(message, info);
+    }
+
+    public void getThumbnailSketch(Message message) throws Exception {
+        String site = readFileLine("src\\main\\resources\\library-wiki-link.txt", currentBook);
+        String info = URLReader.GetInfo(site.substring(2), URLReader.InfoAbout.ThumbnailSketchBook);
+        StringBuffer text = new StringBuffer();
+        var arInfo = info.toCharArray();
+        for (int i = 0; i < arInfo.length; i++){
+            if (arInfo[i] == '\n'){
+                sendMsg(message, text.toString());
+                text = new StringBuffer(); //затормозить выход
+            }
+            else
+                text.append(arInfo[i]);
+        }
+    }
+
+    private String readFileLine(String nameFile, int n){
+        try {
+            File file = new java.io.File(nameFile);
+            FileReader fileReader = new FileReader(file, StandardCharsets.UTF_8);
+            BufferedReader reader = new BufferedReader(fileReader);
+            int count = 1;
+            String line = reader.readLine();
+            while ((line != null) && (count < n)) {
+                line = reader.readLine();
+                count++;
+            }
+            reader.close();
+            return line;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    public void readNext(Message message){
+        sendMsg(message, currentParagraphsList.get(currentPosition));
+        currentPosition++;
+    }
+    
+    private String getCurrentBookName() {
+        var result = new StringBuffer();
+        var name = readFileLine("library.txt", currentBook).toCharArray();
+        var fl= false;
+        for(var i =0; i < name.length; i++){
+            if (fl)
+                result.append(name[i]);
+            if(name[i] == '"')
+                fl = !fl;
+        }
+        return result.deleteCharAt(result.length() - 1).toString();
+    }
+
+    private void setCurrentParagraphsList(){
+        try {
+            currentParagraphsList = googleDrive.getParagraphsList(googleDrive.getTextByGoogleDisk(googleDrive.getDrive(), getCurrentBookName()));
         } catch (IOException e) {
             e.printStackTrace();
         }
