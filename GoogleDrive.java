@@ -27,7 +27,7 @@ import java.io.InputStream;
 
 public class GoogleDrive {
 
-    private Drive Service;
+    public Drive Service;
     private HashMap<String, String> Files = new HashMap<String, String>(); // ключ - имя файла, значение - его ID
 
     private static final String APPLICATION_NAME = "Google Drive API Java Quickstart";
