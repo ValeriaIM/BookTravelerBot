@@ -174,11 +174,38 @@ public class Bot extends BotPrimitive {
             }
         }));
         commands.put("ᐅ", (this::readNext));
+        commands.put("quiz", (message -> {
+            try {
+                quiz(message);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }));
         //подумать над тем, как пользователь будет получать выбранный абзац
+        return commands;
+    }
+    private HashMap<String, MyFunc> createQuizCommands(){
+        HashMap<String, MyFunc> commands = new HashMap<>();
+        commands.put("/help", (this::help));
+        //commands.put("/ finish", (this:: finish()));
+
         return commands;
     }
 
     //////////////////
+    private void quiz(Message message) throws IOException {
+        var userDates = getUserDates(message);
+        userDates.getState().setCurrentState(State.state.Quiz);
+        userDates.setCurrentCommands(createQuizCommands());
+        sendMsg(message, "Вы проходите викторину по выбранной книге.");
+        var questions = googleDrive.getTextByGoogleDisk(googleDrive.getDrive(), reader.getCurrentBookName(userDates.getCurrentBook()).concat("Questions")).split(":\n");
+        var answers = googleDrive.getTextByGoogleDisk(googleDrive.getDrive(), reader.getCurrentBookName(userDates.getCurrentBook()).concat("Answers")).split("\n");
+        var questionsAnswers = new HashMap<String, String>();
+        for(var i = 0; i < questions.length; i++)
+            questionsAnswers.put(questions[i],answers[i]);
+        var quiz = new Quiz(questionsAnswers);
+        userDates.setCurrentQuiz(quiz);
+    }
     private void help(Message message) {
         var botState = getUserState(message);
         if (botState.getCurrentState() == State.state.Main)
@@ -187,6 +214,8 @@ public class Bot extends BotPrimitive {
             printFile("src\\main\\resources\\helpLibrary.txt", message);
         else if (botState.getCurrentState() == State.state.Read)
             printFile("src\\main\\resources\\helpRead.txt", message);
+        else if (botState.getCurrentState() == State.state.Quiz)
+            printFile("src\\main\\resources\\helpQuiz.txt", message);
     } // сделать функции перехода. не сейчас
 
     private void authors(Message message) {
