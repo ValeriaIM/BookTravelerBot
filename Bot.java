@@ -63,11 +63,7 @@ public class Bot extends TelegramLongPollingBot {
         Message message = update.getMessage();
 
         if (message != null && message.hasText()){
-            try {
-                processingMessage(message);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            processingMessage(message);
         }
     }
 
