@@ -6,9 +6,14 @@ public class UserDates {
     private HashMap<String, BotPrimitive.MyFunc> currentCommands;
     private Boolean flChoose = false;
     private Boolean flEcho = false;
+    private Boolean flQuiz = false;
+
     private int currentBook = 0;
     private ArrayList<String> currentParagraphsList = new ArrayList<>();
     private int currentPosition = 0;
+
+    private Quiz currentQuiz = new Quiz(new ArrayList<String>(), new ArrayList<String>());
+    private int currentQuestion = 0;
 
     public State getState() {
         return state;
@@ -30,12 +35,20 @@ public class UserDates {
         return flEcho;
     }
 
+    public Boolean getFlQuiz() {
+        return flQuiz;
+    }
+
     public void setFlChoose(Boolean flChoose) {
         this.flChoose = flChoose;
     }
 
     public void setFlEcho(Boolean flEcho) {
         this.flEcho = flEcho;
+    }
+
+    public void setFlQuiz(Boolean flQuiz) {
+        this.flQuiz = flQuiz;
     }
 
     public ArrayList<String> getCurrentParagraphsList() {
@@ -50,15 +63,30 @@ public class UserDates {
         return currentPosition;
     }
 
+    public Quiz getCurrentQuiz(){
+        return  currentQuiz;
+    }
+
+    public int getCurrentQuestion(){
+        return currentQuestion;
+    }
+
     public void setCurrentBook(int currentBook) {
         this.currentBook = currentBook;
     }
 
-    public void setCurrentParagraphsList(ArrayList<String> currentParagraphsList) {
-        this.currentParagraphsList = currentParagraphsList;
+    public void setCurrentParagraphsList(ArrayList<String> ParagraphsList) {
+        this.currentParagraphsList = ParagraphsList;
     }
 
     public void setCurrentPosition(int currentPosition) {
         this.currentPosition = currentPosition;
+    }
+
+    public void setCurrentQuiz(Quiz quiz){
+        this.currentQuiz = quiz;
+    }
+    public void upCurrentQuestion(){
+        currentQuestion++;
     }
 }
