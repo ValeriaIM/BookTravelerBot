@@ -1,19 +1,20 @@
 import java.util.HashMap;
 
 public class State {
-    enum state{
+    enum state {
         Main,
         Library,
-        Read
+        Read,
+        Quiz
     }
 
     private state currentState = state.Main;
 
-    public state getCurrentState(){
+    public state getCurrentState() {
         return currentState;
     }
 
-    public void setCurrentState(state newState){
+    public void setCurrentState(state newState) {
         currentState = newState;
     }
 
