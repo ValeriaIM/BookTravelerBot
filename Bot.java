@@ -58,7 +58,14 @@ public class Bot extends BotPrimitive {
         } else if (userDates.getFlChoose()) {
             chooseBook(message);
             userDates.setFlChoose(false);
-        } else if (currentCommands.containsKey(message.getText())) {
+        } else if(userDates.getFlQuiz()){
+            try {
+                quiz(message);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        else if (currentCommands.containsKey(message.getText())) {
             MyFunc func = currentCommands.get(message.getText());
             func.func(message);
         } else
@@ -174,11 +181,46 @@ public class Bot extends BotPrimitive {
             }
         }));
         commands.put("ᐅ", (this::readNext));
+        commands.put("quiz", (message -> {
+            try {
+                quiz(message);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }));
         //подумать над тем, как пользователь будет получать выбранный абзац
         return commands;
     }
+    private HashMap<String, MyFunc> createQuizCommands(){
+        HashMap<String, MyFunc> commands = new HashMap<>();
+        commands.put("/help", (this::help));
+        //commands.put("/ finish", (this:: finish()));
 
-    //////////////////
+        return commands;
+    }
+
+    ////////////////// воть это доделать мне надо :3
+    private void quiz(Message message) throws IOException {
+        var userDates = getUserDates(message);
+        if(userDates.getFlQuiz()){
+            sendMsg(message, userDates.getCurrentQuiz().getQuestions().get(userDates.getCurrentQuestion()));
+            userDates.upCurrentQuestion();
+        }
+        else {
+            userDates.getState().setCurrentState(State.state.Quiz);
+            userDates.setCurrentCommands(createQuizCommands());
+            sendMsg(message, "Вы проходите викторину по выбранной книге.");
+            var questions = googleDrive.getTextByGoogleDisk(googleDrive.getDrive(), reader.getCurrentBookName(userDates.getCurrentBook()).concat("Questions")).split(":\n");
+            var answers = googleDrive.getTextByGoogleDisk(googleDrive.getDrive(), reader.getCurrentBookName(userDates.getCurrentBook()).concat("Answers")).split("\n");
+            var questions1 = new ArrayList<String>();
+            var answers1 = new ArrayList<String>();
+            Collections.addAll(questions1, questions);
+            Collections.addAll(answers1, answers);
+            var quiz = new Quiz(questions1, answers1);
+            userDates.setCurrentQuiz(quiz);
+            userDates.setFlQuiz(true);
+        }
+    }
     private void help(Message message) {
         var botState = getUserState(message);
         if (botState.getCurrentState() == State.state.Main)
@@ -187,6 +229,8 @@ public class Bot extends BotPrimitive {
             printFile("src\\main\\resources\\helpLibrary.txt", message);
         else if (botState.getCurrentState() == State.state.Read)
             printFile("src\\main\\resources\\helpRead.txt", message);
+        else if (botState.getCurrentState() == State.state.Quiz)
+            printFile("src\\main\\resources\\helpQuiz.txt", message);
     } // сделать функции перехода. не сейчас
 
     private void authors(Message message) {
