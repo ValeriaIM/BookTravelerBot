@@ -9,6 +9,15 @@ public class UserDates {
     private int currentBook = 0;
     private ArrayList<String> currentParagraphsList = new ArrayList<>();
     private int currentPosition = 0;
+    private Quiz currentQuiz;
+    
+    public Quiz getCurrentQuiz() {
+        return currentQuiz;
+    }
+    
+    public void setCurrentQuiz(Quiz quiz) {
+        this.currentQuiz = quiz;
+    }
 
     public State getState() {
         return state;
