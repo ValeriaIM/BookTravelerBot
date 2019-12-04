@@ -41,11 +41,15 @@ public class Bot extends BotPrimitive {
     public void onUpdateReceived(Update update) { //прием сообщений, получение обновлений, реализованный на лонгпул - запрос
         Message message = update.getMessage();
         if (message != null && message.hasText()) {
-            processingMessage(message);
+            try {
+                processingMessage(message);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    private void processingMessage(Message message){
+    private void processingMessage(Message message) throws IOException {
         var chatId = message.getChatId().toString();
         if (!Users.containsKey(chatId)) {
             addNewUser(chatId);
@@ -58,6 +62,8 @@ public class Bot extends BotPrimitive {
         } else if (userDates.getFlChoose()) {
             chooseBook(message);
             userDates.setFlChoose(false);
+        } else if (userDates.getFlQuiz()) {
+            doTest(message);
         } else if (currentCommands.containsKey(message.getText())) {
             MyFunc func = currentCommands.get(message.getText());
             func.func(message);
@@ -157,7 +163,6 @@ public class Bot extends BotPrimitive {
     private HashMap<String, MyFunc> createReadCommands() {
         HashMap<String, MyFunc> commands = new HashMap<>();
         commands.put("?", (this::help));
-        // commands.put("/exitToMain", (message -> exitToMain(bot, botState, message)));
         commands.put("library", (this::library));
         commands.put("infoAboutAuthor", (message -> {
             try {
@@ -174,7 +179,7 @@ public class Bot extends BotPrimitive {
             }
         }));
         commands.put("ᐅ", (this::readNext));
-        commands.put("test", (this::createTest));
+        commands.put("quiz", (this::doTest));
         return commands;
     }
 
@@ -182,10 +187,6 @@ public class Bot extends BotPrimitive {
         HashMap<String, MyFunc> commands = new HashMap<>();
         commands.put("?", (this::help));
         commands.put("exitToLibrary", (this::exitToLibrary));
-        commands.put("1", (this::checkAnswer));
-        commands.put("2", (this::checkAnswer));
-        commands.put("3", (this::checkAnswer));
-        commands.put("4", (this::checkAnswer));
         return commands;
     }
     //////////////////
@@ -224,9 +225,33 @@ public class Bot extends BotPrimitive {
         sendMsg(message, "Вы в библиотеке.");
         printFile("src\\main\\resources\\library.txt", message);
     }
-    
-    private void createTest(Message message) {
-        
+
+    private void doTest(Message message) throws IOException {
+        var userDates = getUserDates(message);
+        createQuiz(message);
+        if (userDates.getFlQuiz()) {
+            userDates.getState().setCurrentState(State.state.Quiz);
+            userDates.setCurrentCommands(createQuizCommands());
+            var answer = message.getText();
+            var question = userDates.getCurrentQuiz().getCurrentQuestion();
+            var correctAnswer = userDates.getCurrentQuiz().getAnswers().get(question);
+            if (answer.equals(correctAnswer))
+                sendMsg(message, "Верно");
+            else
+                sendMsg(message, "Неверно");
+            userDates.getCurrentQuiz().nextQuestion();
+            question++;
+            if (question > userDates.getCurrentQuiz().getAnswers().size())
+                userDates.setFlQuiz(false);
+            else
+                sendMsg(message, userDates.getCurrentQuiz().getQuestions().get(question));
+        } else {
+            userDates.setFlQuiz(true);
+            System.out.println(userDates.getCurrentQuiz().getQuestions());
+            userDates.getCurrentQuiz().nextQuestion();
+            var question = userDates.getCurrentQuiz().getQuestions().get(1);
+            sendMsg(message, question);
+        }
     }
 
     private void exitToMain(Message message) {
@@ -235,7 +260,7 @@ public class Bot extends BotPrimitive {
         userDates.setCurrentCommands(createPrimitiveCommands());
         sendMsg(message, "Вы вышли в главное меню.");
     }
-    
+
     private void exitToLibrary(Message message) {
         var userDates = getUserDates(message);
         userDates.getState().setCurrentState(State.state.Library);
@@ -286,8 +311,16 @@ public class Bot extends BotPrimitive {
         sendMsg(message, userDates.getCurrentParagraphsList().get(pos));
         userDates.setCurrentPosition(pos + 1);
     }
-    
-    private void checkAnswer(Message message) {
-        
+
+    private void createQuiz(Message message) throws IOException {
+        var userDates = getUserDates(message);
+        var name = reader.getCurrentBookName(userDates.getCurrentBook());
+        var arAnswers = googleDrive.getTextByGoogleDisk(googleDrive.getDrive(), name.concat(".Answers")).split(";\n");
+        var arQuestions = googleDrive.getTextByGoogleDisk(googleDrive.getDrive(), name.concat(".Questions")).split(";\n");
+        var answers = new ArrayList<String>();
+        var questions = new ArrayList<String>();
+        Collections.addAll(answers, arAnswers);
+        Collections.addAll(questions, arQuestions);
+        userDates.setCurrentQuiz(new Quiz(questions, answers));
     }
 }
