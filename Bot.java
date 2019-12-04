@@ -178,6 +178,17 @@ public class Bot extends BotPrimitive {
         return commands;
     }
 
+    private HashMap<String, MyFunc> createQuizCommands() {
+        HashMap<String, MyFunc> commands = new HashMap<>();
+        commands.put("/help", (this::help));
+        commands.put("/exitToLibrary", (this::exitToLibrary));
+        commands.put("chooseBook", (message -> {
+            sendMsg(message, "Введите номер книги");
+            chooseBook(message);
+        }));
+        commands.put("1", (this::checkAnswer));
+        return commands;
+    }
     //////////////////
     private void help(Message message) {
         var botState = getUserState(message);
