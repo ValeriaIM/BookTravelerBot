@@ -174,6 +174,7 @@ public class Bot extends BotPrimitive {
             }
         }));
         commands.put("ᐅ", (this::readNext));
+        commands.put("test", (this::createTest));
         return commands;
     }
 
@@ -222,6 +223,10 @@ public class Bot extends BotPrimitive {
         userDates.setCurrentCommands(createLibraryCommands());
         sendMsg(message, "Вы в библиотеке.");
         printFile("src\\main\\resources\\library.txt", message);
+    }
+    
+    private void createTest(Message message) {
+        
     }
 
     private void exitToMain(Message message) {
