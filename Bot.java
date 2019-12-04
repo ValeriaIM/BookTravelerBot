@@ -135,18 +135,18 @@ public class Bot extends BotPrimitive {
     //////////////////
     private HashMap<String, MyFunc> createPrimitiveCommands() {
         HashMap<String, MyFunc> commands = new HashMap<>();
-        commands.put("/help", (this::help));
-        commands.put("/echo", (this::echo));
-        commands.put("/authors", (this::authors));
-        commands.put("/printDate", (this::printDate));
-        commands.put("/library", (this::library));
+        commands.put("?", (this::help));
+        commands.put("echo", (this::echo));
+        commands.put("authors", (this::authors));
+        commands.put("printDate", (this::printDate));
+        commands.put("library", (this::library));
         return commands;
     }
 
     private HashMap<String, MyFunc> createLibraryCommands() {
         HashMap<String, MyFunc> commands = new HashMap<>();
-        commands.put("/help", (this::help));
-        commands.put("/exitToMain", (this::exitToMain));
+        commands.put("?", (this::help));
+        commands.put("exitToMain", (this::exitToMain));
         commands.put("chooseBook", (message -> {
             sendMsg(message, "Введите номер книги");
             chooseBook(message);
@@ -156,17 +156,17 @@ public class Bot extends BotPrimitive {
 
     private HashMap<String, MyFunc> createReadCommands() {
         HashMap<String, MyFunc> commands = new HashMap<>();
-        commands.put("/help", (this::help));
+        commands.put("?", (this::help));
         // commands.put("/exitToMain", (message -> exitToMain(bot, botState, message)));
-        commands.put("/library", (this::library));
-        commands.put("/infoAboutAuthor", (message -> {
+        commands.put("library", (this::library));
+        commands.put("infoAboutAuthor", (message -> {
             try {
                 getInfoAbAuthor(message);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }));
-        commands.put("/getThumbnailSketch", (message -> {
+        commands.put("getThumbnailSketch", (message -> {
             try {
                 getThumbnailSketch(message);
             } catch (Exception e) {
@@ -174,19 +174,17 @@ public class Bot extends BotPrimitive {
             }
         }));
         commands.put("ᐅ", (this::readNext));
-        //подумать над тем, как пользователь будет получать выбранный абзац
         return commands;
     }
 
     private HashMap<String, MyFunc> createQuizCommands() {
         HashMap<String, MyFunc> commands = new HashMap<>();
-        commands.put("/help", (this::help));
-        commands.put("/exitToLibrary", (this::exitToLibrary));
-        commands.put("chooseBook", (message -> {
-            sendMsg(message, "Введите номер книги");
-            chooseBook(message);
-        }));
+        commands.put("?", (this::help));
+        commands.put("exitToLibrary", (this::exitToLibrary));
         commands.put("1", (this::checkAnswer));
+        commands.put("2", (this::checkAnswer));
+        commands.put("3", (this::checkAnswer));
+        commands.put("4", (this::checkAnswer));
         return commands;
     }
     //////////////////
@@ -232,6 +230,13 @@ public class Bot extends BotPrimitive {
         userDates.setCurrentCommands(createPrimitiveCommands());
         sendMsg(message, "Вы вышли в главное меню.");
     }
+    
+    private void exitToLibrary(Message message) {
+        var userDates = getUserDates(message);
+        userDates.getState().setCurrentState(State.state.Library);
+        userDates.setCurrentCommands(createLibraryCommands());
+        sendMsg(message, "Вы вышли в библиотеку.");
+    }
 
     private void chooseBook(Message message) {
         var userDates = getUserDates(message);
@@ -275,5 +280,9 @@ public class Bot extends BotPrimitive {
         var pos = userDates.getCurrentPosition();
         sendMsg(message, userDates.getCurrentParagraphsList().get(pos));
         userDates.setCurrentPosition(pos + 1);
+    }
+    
+    private void checkAnswer(Message message) {
+        
     }
 }
