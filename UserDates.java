@@ -10,14 +10,6 @@ public class UserDates {
     private ArrayList<String> currentParagraphsList = new ArrayList<>();
     private int currentPosition = 0;
     private Quiz currentQuiz;
-    
-    public Quiz getCurrentQuiz() {
-        return currentQuiz;
-    }
-    
-    public void setCurrentQuiz(Quiz quiz) {
-        this.currentQuiz = quiz;
-    }
 
     public State getState() {
         return state;
@@ -57,6 +49,14 @@ public class UserDates {
 
     public int getCurrentPosition() {
         return currentPosition;
+    }
+
+    public Quiz getCurrentQuiz(){
+        return currentQuiz;
+    }
+
+    public void setCurrentQuiz(Quiz quiz){
+        this.currentQuiz = quiz;
     }
 
     public void setCurrentBook(int currentBook) {
