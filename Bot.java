@@ -62,8 +62,6 @@ public class Bot extends BotPrimitive {
         } else if (userDates.getFlChoose()) {
             chooseBook(message);
             userDates.setFlChoose(false);
-        } else if (userDates.getFlQuiz()) {
-            doTest(message);
         } else if (currentCommands.containsKey(message.getText())) {
             MyFunc func = currentCommands.get(message.getText());
             func.func(message);
@@ -87,10 +85,18 @@ public class Bot extends BotPrimitive {
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
         KeyboardRow keyboardFirstRow = new KeyboardRow();
+        int count = 0;
         for (String command : currentCommands.keySet()) {
             keyboardFirstRow.add(new KeyboardButton(command));
+            count++;
+            if (count == 3){
+                keyboardRowList.add(keyboardFirstRow);
+                keyboardFirstRow = new KeyboardRow();
+                count = 0;
+            }
         }
-        keyboardRowList.add(keyboardFirstRow);
+        if (keyboardFirstRow != null)
+            keyboardRowList.add(keyboardFirstRow);
         replyKeyboardMarkup.setKeyboard(keyboardRowList);
     }
 
@@ -142,18 +148,18 @@ public class Bot extends BotPrimitive {
     private HashMap<String, MyFunc> createPrimitiveCommands() {
         HashMap<String, MyFunc> commands = new HashMap<>();
         commands.put("?", (this::help));
-        commands.put("echo", (this::echo));
-        commands.put("authors", (this::authors));
-        commands.put("printDate", (this::printDate));
-        commands.put("library", (this::library));
+        commands.put("эхо", (this::echo));
+        commands.put("авторы", (this::authors));
+        commands.put("дата", (this::printDate));
+        commands.put("библиотека", (this::library));
         return commands;
     }
 
     private HashMap<String, MyFunc> createLibraryCommands() {
         HashMap<String, MyFunc> commands = new HashMap<>();
         commands.put("?", (this::help));
-        commands.put("exitToMain", (this::exitToMain));
-        commands.put("chooseBook", (message -> {
+        commands.put("главное меню", (this::exitToMain));
+        commands.put("выбрать книгу", (message -> {
             sendMsg(message, "Введите номер книги");
             chooseBook(message);
         }));
@@ -163,15 +169,15 @@ public class Bot extends BotPrimitive {
     private HashMap<String, MyFunc> createReadCommands() {
         HashMap<String, MyFunc> commands = new HashMap<>();
         commands.put("?", (this::help));
-        commands.put("library", (this::library));
-        commands.put("infoAboutAuthor", (message -> {
+        commands.put("библиотека", (this::library));
+        commands.put("автор", (message -> {
             try {
                 getInfoAbAuthor(message);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }));
-        commands.put("getThumbnailSketch", (message -> {
+        commands.put("краткое", (message -> {
             try {
                 getThumbnailSketch(message);
             } catch (Exception e) {
@@ -179,16 +185,21 @@ public class Bot extends BotPrimitive {
             }
         }));
         commands.put("ᐅ", (this::readNext));
-        commands.put("quiz", (this::doTest));
+        commands.put("викторина", (this::runQuiz));
         return commands;
     }
 
     private HashMap<String, MyFunc> createQuizCommands() {
         HashMap<String, MyFunc> commands = new HashMap<>();
         commands.put("?", (this::help));
-        commands.put("exitToLibrary", (this::exitToLibrary));
+        commands.put("библиотека", (this::library));
+        commands.put("1", (message -> checkAnswer(message, "1")));
+        commands.put("2", (message -> checkAnswer(message, "2")));
+        commands.put("3", (message -> checkAnswer(message, "3")));
         return commands;
     }
+
+
     //////////////////
     private void help(Message message) {
         var botState = getUserState(message);
@@ -198,6 +209,8 @@ public class Bot extends BotPrimitive {
             printFile("src\\main\\resources\\helpLibrary.txt", message);
         else if (botState.getCurrentState() == State.state.Read)
             printFile("src\\main\\resources\\helpRead.txt", message);
+        else if (botState.getCurrentState() == State.state.Quiz)
+            printFile("src\\main\\resources\\helpQuiz.txt", message);
     } // сделать функции перехода. не сейчас
 
     private void authors(Message message) {
@@ -226,30 +239,38 @@ public class Bot extends BotPrimitive {
         printFile("src\\main\\resources\\library.txt", message);
     }
 
-    private void doTest(Message message) throws IOException {
+    private void checkAnswer(Message message, String answer) throws IOException {
         var userDates = getUserDates(message);
-        createQuiz(message);
-        if (userDates.getFlQuiz()) {
+        userDates.getCurrentQuiz().setCurrentAnswer(answer);
+        runQuiz(message);
+    }
+
+    private void runQuiz(Message message) throws IOException {
+        var userDates = getUserDates(message);
+        if (userDates.getState().getCurrentState() == State.state.Quiz) {
+            if(userDates.getCurrentQuiz().getCurrentQuestion() >= userDates.getCurrentQuiz().getAnswers().length){
+                sendMsg(message, "Викторина завершена.");
+                library(message);
+            } else {
+                var question = userDates.getCurrentQuiz().getCurrentQuestion();
+                var correctAnswer = userDates.getCurrentQuiz().getAnswers()[question];
+                if(userDates.getCurrentQuiz().getCurrentAnswer().equals(correctAnswer))
+                    sendMsg(message, "Верно");
+                else
+                    sendMsg(message, "Неверно");
+                userDates.getCurrentQuiz().nextQuestion();
+                if(userDates.getCurrentQuiz().getCurrentQuestion() < userDates.getCurrentQuiz().getAnswers().length)
+                    sendMsg(message, userDates.getCurrentQuiz().getQuestions()[userDates.getCurrentQuiz().getCurrentQuestion()]);
+                else {
+                    sendMsg(message, "Викторина завершена.");
+                    library(message);
+                }
+            }
+        } else{
             userDates.getState().setCurrentState(State.state.Quiz);
+            createQuiz(message);
             userDates.setCurrentCommands(createQuizCommands());
-            var answer = message.getText();
-            var question = userDates.getCurrentQuiz().getCurrentQuestion();
-            var correctAnswer = userDates.getCurrentQuiz().getAnswers().get(question);
-            if (answer.equals(correctAnswer))
-                sendMsg(message, "Верно");
-            else
-                sendMsg(message, "Неверно");
-            userDates.getCurrentQuiz().nextQuestion();
-            question++;
-            if (question > userDates.getCurrentQuiz().getAnswers().size())
-                userDates.setFlQuiz(false);
-            else
-                sendMsg(message, userDates.getCurrentQuiz().getQuestions().get(question));
-        } else {
-            userDates.setFlQuiz(true);
-            System.out.println(userDates.getCurrentQuiz().getQuestions());
-            userDates.getCurrentQuiz().nextQuestion();
-            var question = userDates.getCurrentQuiz().getQuestions().get(1);
+            var question = userDates.getCurrentQuiz().getQuestions()[0];
             sendMsg(message, question);
         }
     }
@@ -259,13 +280,6 @@ public class Bot extends BotPrimitive {
         userDates.getState().setCurrentState(State.state.Main);
         userDates.setCurrentCommands(createPrimitiveCommands());
         sendMsg(message, "Вы вышли в главное меню.");
-    }
-
-    private void exitToLibrary(Message message) {
-        var userDates = getUserDates(message);
-        userDates.getState().setCurrentState(State.state.Library);
-        userDates.setCurrentCommands(createLibraryCommands());
-        sendMsg(message, "Вы вышли в библиотеку.");
     }
 
     private void chooseBook(Message message) {
@@ -315,12 +329,9 @@ public class Bot extends BotPrimitive {
     private void createQuiz(Message message) throws IOException {
         var userDates = getUserDates(message);
         var name = reader.getCurrentBookName(userDates.getCurrentBook());
-        var arAnswers = googleDrive.getTextByGoogleDisk(googleDrive.getDrive(), name.concat(".Answers")).split(";\n");
-        var arQuestions = googleDrive.getTextByGoogleDisk(googleDrive.getDrive(), name.concat(".Questions")).split(";\n");
-        var answers = new ArrayList<String>();
-        var questions = new ArrayList<String>();
-        Collections.addAll(answers, arAnswers);
-        Collections.addAll(questions, arQuestions);
-        userDates.setCurrentQuiz(new Quiz(questions, answers));
+        var answer = reader.readFile("src\\main\\resources\\quizs\\Answers\\" + name + ".Answers.txt").split(";\n");
+        //var arAnswers = googleDrive.getTextByGoogleDisk(googleDrive.getDrive(), name + ".Answers").split("\n");
+        var arQuestions = googleDrive.getTextByGoogleDisk(googleDrive.getDrive(), name + ".Questions").split(";");
+        userDates.setCurrentQuiz(new Quiz(arQuestions, answer));
     }
 }
