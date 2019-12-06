@@ -26,7 +26,7 @@ public class BotPrimitive extends TelegramLongPollingBot {
         return "741739778:AAFfKTQkbLQkePnWPJaRhe11uAJFnUYcfaM";
     }
 
-    public static ReplyKeyboardMarkup getReplyKeyboardMarkup() {
+    static ReplyKeyboardMarkup getReplyKeyboardMarkup() {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();//инициализация клавиатуры
         replyKeyboardMarkup.setSelective(true);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -34,7 +34,7 @@ public class BotPrimitive extends TelegramLongPollingBot {
         return replyKeyboardMarkup;
     }
 
-    public static SendMessage getSendMessage(Message message, String text) {
+    static SendMessage getSendMessage(Message message, String text) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.enableMarkdown(true);
         sendMessage.setChatId(message.getChatId().toString());
