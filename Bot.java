@@ -42,7 +42,7 @@ public class Bot extends BotPrimitive {
     private void processingMessage(Message message) throws IOException {
         var chatId = message.getChatId().toString();
         if (!botLogic.getUsers().containsKey(chatId)) {
-            botLogic.getUsers().put(chatId, createUser(chatId));
+            botLogic.getUsers().put(chatId, createUser());
         }
         var currentCommands = botLogic.getUserCommands(chatId, this);
         var userDates = botLogic.getUserData(chatId, this);
@@ -95,7 +95,7 @@ public class Bot extends BotPrimitive {
         sendMsg(message, botLogic.getReader().readFile(nameFile));
     }
 
-    UserData createUser(String chatId) {
+    UserData createUser() {
         var data = new UserData();
         data.setCurrentCommands(createPrimitiveCommands());
         return data;
