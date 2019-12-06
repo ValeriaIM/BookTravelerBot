@@ -15,9 +15,9 @@ class URLReaderTest {
             FileReader fileReader = new FileReader(file, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(fileReader);
             String line = reader.readLine();
-            StringBuffer text = new StringBuffer();
+            StringBuilder text = new StringBuilder();
             while (line != null) {
-                text.append(line + "\n");
+                text.append(line).append("\n");
                 line = reader.readLine();
             }
             return text.toString();
@@ -29,21 +29,21 @@ class URLReaderTest {
 
     @Test
     void processText_DefaultSite() throws Exception {
-        String actual = URLReader.ProcessText(URLReader.GetThumbnailSketch("https://ru.wikipedia.org/wiki/Java", "<div", "<p><b>", "</p", "<div"));
+        String actual = URLReader.ProcessText(URLReader.GetThumbnailSketch("https://ru.wikipedia.org/wiki/Java", "<div", "<p><b>", "<div"));
         String expected = GetTextFromFile("src\\main\\resources\\textForURLReaderTest-2m-1.txt");
         assertEquals(expected, actual);
     }
 
     @Test
     void processText_SiteOfAuthor() throws Exception {
-        String actual = URLReader.ProcessText(URLReader.GetThumbnailSketch("https://ru.wikipedia.org/wiki/Гослинг,_Джеймс", "</table", "<p><b>", "</p", "<div"));// поправить
+        String actual = URLReader.ProcessText(URLReader.GetThumbnailSketch("https://ru.wikipedia.org/wiki/Гослинг,_Джеймс", "</table", "<p><b>", "<div"));// поправить
         String expected = GetTextFromFile("src\\main\\resources\\textForURLReaderTest-2m-2.txt");
         assertEquals(expected, actual);
     }
 
     @Test
     void processText_SiteOfBook() throws Exception {
-        String actual = URLReader.ProcessText(URLReader.GetThumbnailSketch("https://ru.wikipedia.org/wiki/Золушка", "</h2", "<p>", "</p", "<h2"));
+        String actual = URLReader.ProcessText(URLReader.GetThumbnailSketch("https://ru.wikipedia.org/wiki/Золушка", "</h2", "<p>", "<h2"));
         String expected = GetTextFromFile("src\\main\\resources\\textForURLReaderTest-2m-3.txt");
         assertEquals(expected, actual);
     }
