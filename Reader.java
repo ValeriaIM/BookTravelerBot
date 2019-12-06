@@ -4,17 +4,16 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class Reader {
-    public String readFile(String nameFile) {
+class Reader {
+    String readFile(String nameFile) {
         try {
             File file = new java.io.File(nameFile);
             FileReader fileReader = new FileReader(file, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(fileReader);
             String line = reader.readLine();
-            StringBuffer text = new StringBuffer();
-
+            StringBuilder text = new StringBuilder();
             while (line != null) {
-                text.append(line + "\n");
+                text.append(line).append("\n");
                 line = reader.readLine();
             }
             return text.toString();
@@ -29,11 +28,11 @@ public class Reader {
         return lines.length;
     }
 
-    public int getCountLinesInFile(String nameFile) {
-        return countLines(readFile(nameFile));
+    int getCountLinesInFile() {
+        return countLines(readFile("src\\main\\resources\\library.txt"));
     }
 
-    public String readFileLine(String nameFile, int n) {
+    String readFileLine(String nameFile, int n) {
         try {
             File file = new java.io.File(nameFile);
             FileReader fileReader = new FileReader(file, StandardCharsets.UTF_8);
@@ -52,14 +51,14 @@ public class Reader {
         }
     }
 
-    public String getCurrentBookName(int currentBook) {
-        var result = new StringBuffer();
+    String getCurrentBookName(int currentBook) {
+        StringBuilder result = new StringBuilder();
         var name = readFileLine("src\\main\\resources\\library.txt", currentBook).toCharArray();
         var fl = false;
-        for (var i = 0; i < name.length; i++) {
+        for (char c : name) {
             if (fl)
-                result.append(name[i]);
-            if (name[i] == '"')
+                result.append(c);
+            if (c == '"')
                 fl = !fl;
         }
         return result.deleteCharAt(result.length() - 1).toString();
