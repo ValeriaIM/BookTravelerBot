@@ -60,7 +60,7 @@ public class Bot extends BotPrimitive {
     }
 
     private void sendMsg(Message message, String text) {
-        if (text == "")
+        if (text.equals(""))
             return;
         SendMessage sendMessage = getSendMessage(message, text);
         try {
@@ -95,7 +95,7 @@ public class Bot extends BotPrimitive {
         sendMsg(message, botLogic.getReader().readFile(nameFile));
     }
 
-    public UserData createUser(String chatId) {
+    UserData createUser(String chatId) {
         var data = new UserData();
         data.setCurrentCommands(createPrimitiveCommands());
         return data;
