@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 
-public class BotLogic {
+class BotLogic {
     private HashMap<String, UserData> users = new HashMap<>();
     private Reader reader = new Reader();
     private GoogleDrive googleDrive;
@@ -17,15 +17,15 @@ public class BotLogic {
         }
     }
 
-    public HashMap<String, UserData> getUsers() {
+    HashMap<String, UserData> getUsers() {
         return users;
     }
 
-    public Reader getReader() {
+    Reader getReader() {
         return reader;
     }
 
-    public void setCurrentParagraphsList(UserData userData) {
+    void setCurrentParagraphsList(UserData userData) {
         try {
             var bookName = reader.getCurrentBookName(userData.getCurrentBook());
             userData.setCurrentParagraphsList(googleDrive.getParagraphsList(googleDrive.getTextByGoogleDisk(googleDrive.getDrive(), bookName)));
@@ -34,19 +34,19 @@ public class BotLogic {
         }
     }
 
-    public State getUserState(String chatId, Bot bot) {
-        return users.computeIfAbsent(chatId, bot::createUser).getState();
+    State getUserState(String chatId, Bot bot) {
+        return users.computeIfAbsent(chatId, chatId1 -> bot.createUser()).getState();
     }
 
-    public HashMap<String, BotPrimitive.MyFunc> getUserCommands(String chatId, Bot bot) {
-        return users.computeIfAbsent(chatId, bot::createUser).getCurrentCommands();
+    HashMap<String, BotPrimitive.MyFunc> getUserCommands(String chatId, Bot bot) {
+        return users.computeIfAbsent(chatId, chatId1 -> bot.createUser()).getCurrentCommands();
     }
 
-    public UserData getUserData(String chatId, Bot bot) {
-        return users.computeIfAbsent(chatId, bot::createUser);
+    UserData getUserData(String chatId, Bot bot) {
+        return users.computeIfAbsent(chatId, chatId1 -> bot.createUser());
     }
 
-    public void createQuiz(String chatId) throws IOException {
+    void createQuiz(String chatId) throws IOException {
         var userDates = users.get(chatId);
         var name = reader.getCurrentBookName(userDates.getCurrentBook());
         var answer = reader.readFile("src\\main\\resources\\quizs\\Answers\\" + name + ".Answers.txt").split(";\n");
