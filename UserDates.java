@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class UserDates {
+public class UserData {
     private State state = new State();
     private HashMap<String, BotPrimitive.MyFunc> currentCommands;
     private Boolean flChoose = false;
@@ -18,11 +18,7 @@ public class UserDates {
     public HashMap<String, BotPrimitive.MyFunc> getCurrentCommands() {
         return currentCommands;
     }
-
-    public void setCurrentCommands(HashMap<String, BotPrimitive.MyFunc> currentCommands) {
-        this.currentCommands = currentCommands;
-    }
-
+    
     public Boolean getFlChoose() {
         return flChoose;
     }
@@ -31,32 +27,31 @@ public class UserDates {
         return flEcho;
     }
 
-    public void setFlChoose(Boolean flChoose) {
-        this.flChoose = flChoose;
-    }
-
-    public void setFlEcho(Boolean flEcho) {
-        this.flEcho = flEcho;
+    public int getCurrentBook() {
+        return currentBook;
     }
 
     public ArrayList<String> getCurrentParagraphsList() {
         return currentParagraphsList;
     }
 
-    public int getCurrentBook() {
-        return currentBook;
-    }
-
     public int getCurrentPosition() {
         return currentPosition;
     }
-
-    public Quiz getCurrentQuiz(){
+    
+    public Quiz getCurrentQuiz() {
         return currentQuiz;
+    } //getters
+    
+    public void setCurrentCommands(HashMap<String, BotPrimitive.MyFunc> currentCommands) {
+        this.currentCommands = currentCommands;
+    }
+    public void setFlChoose(Boolean flChoose) {
+        this.flChoose = flChoose;
     }
 
-    public void setCurrentQuiz(Quiz quiz){
-        this.currentQuiz = quiz;
+    public void setFlEcho(Boolean flEcho) {
+        this.flEcho = flEcho;
     }
 
     public void setCurrentBook(int currentBook) {
@@ -70,4 +65,8 @@ public class UserDates {
     public void setCurrentPosition(int currentPosition) {
         this.currentPosition = currentPosition;
     }
+
+    public void setCurrentQuiz(Quiz quiz) {
+        this.currentQuiz = quiz;
+    } //setters
 }
