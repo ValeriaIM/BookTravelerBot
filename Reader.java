@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 
 public class Reader {
     public String readFile(String nameFile) {
-        try{
+        try {
             File file = new java.io.File(nameFile);
             FileReader fileReader = new FileReader(file, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(fileReader);
@@ -24,16 +24,16 @@ public class Reader {
         }
     }
 
-    private int countLines(String str){
+    private int countLines(String str) {
         String[] lines = str.split("\r\n|\r|\n");
         return lines.length;
     }
 
-    public int getCountLinesInFile(String nameFile){
+    public int getCountLinesInFile(String nameFile) {
         return countLines(readFile(nameFile));
     }
 
-    public String readFileLine(String nameFile, int n){
+    public String readFileLine(String nameFile, int n) {
         try {
             File file = new java.io.File(nameFile);
             FileReader fileReader = new FileReader(file, StandardCharsets.UTF_8);
@@ -55,11 +55,11 @@ public class Reader {
     public String getCurrentBookName(int currentBook) {
         var result = new StringBuffer();
         var name = readFileLine("src\\main\\resources\\library.txt", currentBook).toCharArray();
-        var fl= false;
-        for(var i =0; i < name.length; i++){
+        var fl = false;
+        for (var i = 0; i < name.length; i++) {
             if (fl)
                 result.append(name[i]);
-            if(name[i] == '"')
+            if (name[i] == '"')
                 fl = !fl;
         }
         return result.deleteCharAt(result.length() - 1).toString();
