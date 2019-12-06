@@ -1,4 +1,4 @@
-public class State {
+class State {
     enum state {
         Main,
         Library,
@@ -8,11 +8,11 @@ public class State {
 
     private state currentState = state.Main;
 
-    public state getCurrentState() {
+    state getCurrentState() {
         return currentState;
     }
 
-    public void setCurrentState(state newState) {
+    void setCurrentState(state newState) {
         currentState = newState;
     }
 }
