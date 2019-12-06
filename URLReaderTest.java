@@ -6,11 +6,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class URLReaderTest {
-    String GetTextFromFile(String namefile){
-        try{
+    String GetTextFromFile(String namefile) {
+        try {
             File file = new java.io.File(namefile);
             FileReader fileReader = new FileReader(file, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(fileReader);
