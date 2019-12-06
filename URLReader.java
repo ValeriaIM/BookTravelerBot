@@ -9,27 +9,27 @@ public class URLReader {
         ThumbnailSketchBook,
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         //System.out.println(GetInfo("https://ru.wikipedia.org/wiki/Java", InfoAbout.Author));
         //System.out.println(GetInfo("https://ru.wikipedia.org/wiki/Виноваты_звёзды_(роман)", InfoAbout.ThumbnailSketchBook));
         //System.out.println(GetThumbnailSketch("https://litlife.club/books/174926/read?page=7", "</div>", "<script src", "</script>", "<a id="));
     }
 
-    public static String GetThumbnailSketch(String site, String preBegin, String begin, String preEnd, String end) throws Exception {
+    static String GetThumbnailSketch(String site, String preBegin, String begin, String end) throws Exception {
         URL website = new URL(site);
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(website.openStream()));
         String inputLine;
-        StringBuilder text = new StringBuilder("");
-        Boolean fl = false;
-        Boolean flEnd = false;
-        Boolean flBegin = false;
+        StringBuilder text = new StringBuilder();
+        boolean fl = false;
+        boolean flEnd = false;
+        boolean flBegin = false;
         while ((inputLine = in.readLine()) != null) {
             if ((flEnd) && (inputLine.contains(end)))
                 break;
             else
                 flEnd = false;
-            if ((inputLine.contains(preEnd)) && fl) {
+            if ((inputLine.contains("</p")) && fl) {
                 flEnd = true;
             }
             if (fl) {
@@ -49,12 +49,12 @@ public class URLReader {
         return text.toString();
     } // необработанный абзац с javascript конструкцией
 
-    public static String ProcessText(String text) {
+    static String ProcessText(String text) {
         if (text.length() == 0)
             return "";
-        StringBuilder newText = new StringBuilder("");
-        Boolean flSkip = false;
-        Boolean flJ = false; //флаг на символ &(случай &#91; = '[')
+        StringBuilder newText = new StringBuilder();
+        boolean flSkip = false;
+        boolean flJ = false; //флаг на символ &(случай &#91; = '[')
         int flDiv = 0;
         var textArray = text.toCharArray();
         for (int i = 0; i < text.length(); i++) {
@@ -108,14 +108,14 @@ public class URLReader {
         return newText.toString();
     }
 
-    public static String GetInfo(String site, InfoAbout info) throws Exception {
+    static String GetInfo(String site, InfoAbout info) throws Exception {
         if (site == null)
             site = "https://ru.wikipedia.org/wiki/Java";
         if (info == InfoAbout.ThumbnailSketchBook) {
-            return ProcessText(GetThumbnailSketch(site, "</h2", "<p", "</p", "<h2"));
+            return ProcessText(GetThumbnailSketch(site, "</h2", "<p", "<h2"));
         }
         if (info == InfoAbout.Author) {
-            return ProcessText(GetThumbnailSketch(site, "</tabl", "<p>", "</p", "<div"));
+            return ProcessText(GetThumbnailSketch(site, "</tabl", "<p>", "<div"));
         }
         return ""; // читать книгу
     }
