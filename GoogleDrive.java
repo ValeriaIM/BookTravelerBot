@@ -15,20 +15,23 @@ import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.io.InputStreamReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 public class GoogleDrive {
 
-    public Drive Service;
-    private HashMap<String, String> Files = new HashMap<String, String>(); // ключ - имя файла, значение - его ID
+    private Drive Service;
+    private HashMap<String, String> Files = new HashMap<>(); // ключ - имя файла, значение - его ID
 
     private static final String APPLICATION_NAME = "Google Drive API Java Quickstart";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
@@ -44,7 +47,6 @@ public class GoogleDrive {
 
     public GoogleDrive() throws IOException, GeneralSecurityException {
         if (!CREDENTIALS_FOLDER.exists()) {
-            CREDENTIALS_FOLDER.mkdirs();
             System.out.println("Created Folder: " + CREDENTIALS_FOLDER.getAbsolutePath());
             System.out.println("Copy file " + CLIENT_SECRET_FILE_NAME + " into folder above.. and rerun this class!!");
             return;
@@ -57,7 +59,7 @@ public class GoogleDrive {
                 .setApplicationName(APPLICATION_NAME).build();
 
         FileList files = Service.files().list().setFields("nextPageToken, files(id, name)").execute();
-        for(File file : files.getFiles()) {
+        for (File file : files.getFiles()) {
             Files.put(file.getName(), file.getId());
         }
     }
@@ -83,29 +85,16 @@ public class GoogleDrive {
         return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
     }
 
-    public void printFiles(Drive service) throws IOException {
-        FileList result = Service.files().list().setPageSize(10).setFields("nextPageToken, files(id, name)").execute();
-        List<File> files = result.getFiles();
-        if (files == null || files.isEmpty()) {
-            System.out.println("No files found.");
-        } else {
-            System.out.println("Files:");
-            for (File file : files) {
-                System.out.printf("%s (%s)\n", file.getName(), file.getId());
-            }
-        }
-    }
-    public String getFileId(String name) {
-        if(!Files.containsKey(name)) {
+    String getFileId(String name) {
+        if (!Files.containsKey(name)) {
             System.out.println("извините, текст данной книги добавится позже");
         }
-        if(!Files.isEmpty())
+        if (!Files.isEmpty())
             return Files.get(name);
-        return null; // как обработать ошибку несуществующего ключа?
-        // протащить в BotState ошибку, а он выведет пользователю "извините, текст данной книги добавится позже"
+        return null;
     }
 
-    public String getTextByGoogleDisk(Drive service , String fileName) throws IOException {
+    public String getTextByGoogleDisk(Drive service, String fileName) throws IOException {
         OutputStream outputStream = new ByteArrayOutputStream();
         var fileId = getFileId(fileName); //
         service.files().export(fileId, "text/plain")
@@ -118,18 +107,18 @@ public class GoogleDrive {
         ArrayList<String> result = new ArrayList<>();
         var currentNumber = 0;
 
-        for(var i  = 0; i < strArray.length; i++) {
-            if(strArray[i].length() > 1) {
-                StringBuffer line = new StringBuffer(strArray[i]);
+        for (String s : strArray) {
+            if (s.length() > 1) {
+                StringBuilder line = new StringBuilder(s);
                 line.insert(0, "(" + currentNumber + ") ");
                 currentNumber++;
                 result.add(line.toString());
             }
         }
-        return  result;
+        return result;
     }
 
-    public static void main(String... args) throws IOException, GeneralSecurityException {
+    public static void main(String... args) {
         System.out.println("CREDENTIALS_FOLDER: " + CREDENTIALS_FOLDER.getAbsolutePath());
     }
 }
