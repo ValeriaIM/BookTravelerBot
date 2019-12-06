@@ -60,6 +60,8 @@ public class Bot extends BotPrimitive {
     }
 
     private void sendMsg(Message message, String text) {
+        if (text == "")
+            return;
         SendMessage sendMessage = getSendMessage(message, text);
         try {
             addButtons(sendMessage, message);
@@ -154,9 +156,8 @@ public class Bot extends BotPrimitive {
         return commands;
     } //createCommands
     ///////////////
-
     private void help(Message message) {
-        printFile(botCommands.help(message, botLogic, this), message);
+        sendMsg(message, botCommands.help(message, botLogic, this));
     } // сделать функции перехода. не сейчас
 
     private void authors(Message message) {
