@@ -15,8 +15,4 @@ public class State {
     public void setCurrentState(state newState) {
         currentState = newState;
     }
-
-    public static void main(String[] args) {
-
-    }
 }
