@@ -165,10 +165,10 @@ public class Bot extends BotPrimitive {
     }
 
     private void echo(Message message) {
-        var userDates = botLogic.getUserData(message.getChatId().toString(), this);
-        if (userDates.getFlEcho())
+        var userData = botLogic.getUserData(message.getChatId().toString(), this);
+        if (userData.getFlEcho())
             sendMsg(message, message.getText());
-        userDates.setFlEcho(true);
+        userData.setFlEcho(true);
     }
 
     private void printDate(Message message) {
@@ -183,8 +183,8 @@ public class Bot extends BotPrimitive {
     }
 
     private void checkAnswer(Message message, String answer) throws IOException {
-        var userDates = botLogic.getUserData(message.getChatId().toString(), this);
-        userDates.getCurrentQuiz().setCurrentAnswer(answer);
+        var userData = botLogic.getUserData(message.getChatId().toString(), this);
+        userData.getCurrentQuiz().setCurrentAnswer(answer);
         runQuiz(message);
     }
 
@@ -211,9 +211,9 @@ public class Bot extends BotPrimitive {
     }
 
     private void exitToMain(Message message) {
-        var userDates = botLogic.getUserData(message.getChatId().toString(), this);
-        userDates.getState().setCurrentState(State.state.Main);
-        userDates.setCurrentCommands(createPrimitiveCommands());
+        var userData = botLogic.getUserData(message.getChatId().toString(), this);
+        userData.getState().setCurrentState(State.state.Main);
+        userData.setCurrentCommands(createPrimitiveCommands());
         sendMsg(message, "Вы вышли в главное меню.");
     }
 
@@ -239,9 +239,9 @@ public class Bot extends BotPrimitive {
     }
 
     private void readNext(Message message) {
-        var userDates = botLogic.getUserData(message.getChatId().toString(), this);
-        var pos = userDates.getCurrentPosition();
-        sendMsg(message, userDates.getCurrentParagraphsList().get(pos));
-        userDates.setCurrentPosition(pos + 1);
+        var userData = botLogic.getUserData(message.getChatId().toString(), this);
+        var pos = userData.getCurrentPosition();
+        sendMsg(message, userData.getCurrentParagraphsList().get(pos));
+        userData.setCurrentPosition(pos + 1);
     } //commandsWithSendMessage
 }
