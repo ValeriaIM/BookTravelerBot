@@ -45,13 +45,13 @@ public class Bot extends BotPrimitive {
             botLogic.getUsers().put(chatId, createUser());
         }
         var currentCommands = botLogic.getUserCommands(chatId, this);
-        var userDates = botLogic.getUserData(chatId, this);
-        if (userDates.getFlEcho()) {
+        var userData = botLogic.getUserData(chatId, this);
+        if (userData.getFlEcho()) {
             echo(message);
-            userDates.setFlEcho(false);
-        } else if (userDates.getFlChoose()) {
+            userData.setFlEcho(false);
+        } else if (userData.getFlChoose()) {
             chooseBook(message);
-            userDates.setFlChoose(false);
+            userData.setFlChoose(false);
         } else if (currentCommands.containsKey(message.getText())) {
             MyFunc func = currentCommands.get(message.getText());
             func.func(message);
@@ -123,7 +123,7 @@ public class Bot extends BotPrimitive {
         return commands;
     }
 
-    private HashMap<String, MyFunc> createReadCommands() {
+    private HashMap<String, MyFunc> createCurrentBookCommands() {
         HashMap<String, MyFunc> commands = new HashMap<>();
         commands.put("?", (this::help));
         commands.put("библиотека", (this::library));
@@ -149,10 +149,18 @@ public class Bot extends BotPrimitive {
     private HashMap<String, MyFunc> createQuizCommands() {
         HashMap<String, MyFunc> commands = new HashMap<>();
         commands.put("?", (this::help));
-        commands.put("библиотека", (this::library));
+        commands.put("книга", (this::returnBook));
         commands.put("1", (message -> checkAnswer(message, "1")));
         commands.put("2", (message -> checkAnswer(message, "2")));
         commands.put("3", (message -> checkAnswer(message, "3")));
+        return commands;
+    }
+
+    private HashMap<String, MyFunc> createReadCommand() {
+        HashMap<String, MyFunc> commands = new HashMap<>();
+        commands.put("?", (this::help));
+        commands.put("книга", (this::returnBook));
+        commands.put("ᐅ", (this::readNext));
         return commands;
     } //createCommands
     ///////////////
@@ -223,7 +231,7 @@ public class Bot extends BotPrimitive {
         if (text.equals("Неправильно выбран номер книги"))
             userData.setCurrentCommands(createLibraryCommands());
         else
-            userData.setCurrentCommands(createReadCommands());
+            userData.setCurrentCommands(createCurrentBookCommands());
         sendMsg(message, text);
     }
 
@@ -241,7 +249,15 @@ public class Bot extends BotPrimitive {
     private void readNext(Message message) {
         var userData = botLogic.getUserData(message.getChatId().toString(), this);
         var pos = userData.getCurrentPosition();
-        sendMsg(message, userData.getCurrentParagraphsList().get(pos));
+        botLogic.getUserData(message.getChatId().toString(), this).setCurrentCommands(createReadCommand());
+        sendMsg(message, botCommands.nextRead(userData, pos));
         userData.setCurrentPosition(pos + 1);
     } //commandsWithSendMessage
+
+    private void returnBook(Message message) {
+        var userData = botLogic.getUserData(message.getChatId().toString(), this);
+        userData.getState().setCurrentState(State.state.Book);
+        userData.setCurrentCommands(createCurrentBookCommands());
+        sendMsg(message, "Вы вернулись в раздел книги");
+    }
 }
