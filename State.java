@@ -2,6 +2,7 @@ class State {
     enum state {
         Main,
         Library,
+        Book,
         Read,
         Quiz
     }
