@@ -13,7 +13,6 @@ public class BotPrimitive extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-
     }
 
     @Override
@@ -23,7 +22,7 @@ public class BotPrimitive extends TelegramLongPollingBot {
 
     @Override
     public String getBotToken() {
-        return "741739778:AAFfKTQkbLQkePnWPJaRhe11uAJFnUYcfaM";
+        return new Reader().readFile("src\\main\\resources\\botToken.txt").substring(0, 45);
     }
 
     static ReplyKeyboardMarkup getReplyKeyboardMarkup() {
