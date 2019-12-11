@@ -13,10 +13,12 @@ class BotCommands {
             return botLogic.getReader().readFile("src\\main\\resources\\helpMain.txt");
         else if (botState.getCurrentState() == State.state.Library)
             return botLogic.getReader().readFile("src\\main\\resources\\helpLibrary.txt");
-        else if (botState.getCurrentState() == State.state.Read)
-            return botLogic.getReader().readFile("src\\main\\resources\\helpRead.txt");
+        else if (botState.getCurrentState() == State.state.Book)
+            return botLogic.getReader().readFile("src\\main\\resources\\helpBook.txt");
         else if (botState.getCurrentState() == State.state.Quiz)
             return botLogic.getReader().readFile("src\\main\\resources\\helpQuiz.txt");
+        else if (botState.getCurrentState() == State.state.Read)
+            return botLogic.getReader().readFile("src\\main\\resources\\helpRead.txt");
         return "";
     } // сделать функции перехода. не сейчас
 
@@ -28,12 +30,12 @@ class BotCommands {
     }
 
     String library(Message message, BotLogic botLogic, Bot bot) {
-        var userDates = botLogic.getUserData(message.getChatId().toString(), bot);
-        if (userDates.getState().getCurrentState() == State.state.Quiz) {
-            var quantity = userDates.getCurrentQuiz().getAnswers().length;
-            return "Викторина завершена. Количество правильных ответов: " + userDates.getCurrentQuiz().getCorrectAnswers() + "/" + quantity;
+        var userData = botLogic.getUserData(message.getChatId().toString(), bot);
+        if (userData.getState().getCurrentState() == State.state.Quiz) {
+            var quantity = userData.getCurrentQuiz().getAnswers().length;
+            return "Викторина завершена. Количество правильных ответов: " + userData.getCurrentQuiz().getCorrectAnswers() + "/" + quantity;
         }
-        userDates.getState().setCurrentState(State.state.Library);
+        userData.getState().setCurrentState(State.state.Library);
         return "";
     }
 
@@ -68,7 +70,7 @@ class BotCommands {
     String chooseBook(Message message, BotLogic botLogic, UserData userData) {
         var countBookInLibrary = botLogic.getReader().getCountLinesInFile();
         if (userData.getFlChoose()) {
-            userData.getState().setCurrentState(State.state.Read);
+            userData.getState().setCurrentState(State.state.Book);
             var number = 0;
             try {
                 number = Integer.parseInt(message.getText());
@@ -87,5 +89,10 @@ class BotCommands {
         }
         userData.setFlChoose(true);
         return "";
+    }
+
+    String nextRead(UserData userData, int pos){
+        userData.getState().setCurrentState(State.state.Read);
+        return userData.getCurrentParagraphsList().get(pos);
     }
 }
